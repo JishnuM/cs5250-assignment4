@@ -40,15 +40,63 @@ def FCFS_scheduling(process_list):
 #Input: process_list, time_quantum (Positive Integer)
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
+#Assume that process_list is sorted by arrive_time
 def RR_scheduling(process_list, time_quantum ):
-    return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
+    schedule = []
+    max_arrival_time = max(map(lambda p: p.arrive_time, process_list))
+    process_arrivals = [-1] * (max_arrival_time + 1)
+    q = []
+    remaining_bursts = {}
+    arrival_times = {}
+    for process in process_list:
+        arrival_times[process] = process.arrive_time
+        remaining_bursts[process] = process.burst_time
+        process_arrivals[process.arrive_time] = process
+    current_time = process_list[0].arrive_time
+    done = False
+    current_process = -1
+    remaining_quantum = -1
+    remaining_burst = -1
+    waiting_time = 0
+    while (not done):
+        if (current_time < len(process_arrivals)):
+            if (process_arrivals[current_time] != -1):
+                q.append(process_arrivals[current_time])
+        if (current_process == -1):
+            if (len(q) <= 0):
+                if (current_time >= len(process_arrivals)):
+                    done = True
+                    break
+                else:
+                    current_time += 1
+                    continue
+            else:
+                current_process = q.pop()
+                remaining_quantum = time_quantum
+                remaining_burst = remaining_bursts[current_process]
+                schedule.append((current_time, current_process.id))
+        current_time += 1
+        remaining_burst -= 1
+        remaining_quantum -= 1
+        if (remaining_burst <= 0):
+            remaining_burst = -1
+            remaining_quantum = -1
+            waiting_time += (current_time - arrival_times[current_process])
+            current_process = -1
+        elif (remaining_quantum <= 0):
+            remaining_quantum = -1
+            remaining_bursts[current_process] = remaining_burst
+            remaining_burst = -1
+            q.append(current_process)
+            current_process = -1
+    average_waiting_time = waiting_time/float(len(process_list))
+    return schedule, average_waiting_time
 
 def SRTF_scheduling(process_list):
     return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
 
 def SJF_scheduling(process_list, alpha):
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
-
 
 def read_input():
     result = []
