@@ -48,9 +48,7 @@ def RR_scheduling(process_list, time_quantum ):
     process_arrivals = [None] * (max_arrival_time + 1)
     q = []
     remaining_bursts = {}
-    arrival_times = {}
     for process in process_list:
-        arrival_times[process] = process.arrive_time
         remaining_bursts[process] = process.burst_time
         process_arrivals[process.arrive_time] = process
     current_time = process_list[0].arrive_time
@@ -83,7 +81,7 @@ def RR_scheduling(process_list, time_quantum ):
         if (remaining_burst <= 0):
             remaining_burst = -1
             remaining_quantum = -1
-            waiting_time += (current_time - arrival_times[current_process])
+            waiting_time += (current_time - current_process.arrive_time - current_process.burst_time)
             current_process = None
         elif (remaining_quantum <= 0):
             remaining_quantum = -1
@@ -98,9 +96,7 @@ def SRTF_scheduling(process_list):
     schedule = []
     max_arrival_time = max(map(lambda p: p.arrive_time, process_list))
     process_arrivals = [None] * (max_arrival_time + 1)
-    arrival_times = {}
     for process in process_list:
-        arrival_times[process] = process.arrive_time
         process_arrivals[process.arrive_time] = process
     current_time = process_list[0].arrive_time
     done = False
@@ -128,22 +124,63 @@ def SRTF_scheduling(process_list):
                     current_time += 1
                     continue
             else:
-                current_process_tuple = heappop(heap)
-                current_process = current_process_tuple[1]
-                remaining_burst = current_process_tuple[0]
+                remaining_burst, current_process = heappop(heap)
                 if (len(schedule) == 0 or current_process.id != schedule[-1][1]):
                     schedule.append((current_time, current_process.id))
         current_time += 1
         remaining_burst -= 1
         if (remaining_burst <= 0):
             remaining_burst = -1
-            waiting_time += (current_time - arrival_times[current_process])
+            waiting_time += (current_time - current_process.arrive_time - current_process.burst_time)
             current_process = None
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
 def SJF_scheduling(process_list, alpha):
-    return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
+    schedule = []
+    max_arrival_time = max(map(lambda p: p.arrive_time, process_list))
+    process_arrivals = [None] * (max_arrival_time + 1)
+    for process in process_list:
+        process_arrivals[process.arrive_time] = process
+    current_time = process_list[0].arrive_time
+    done = False
+    current_process = None
+    remaining_burst = -1
+    last_bursts_and_predicted = {}
+    heap = []
+    waiting_time = 0
+    while (not done):
+        if (current_time < len(process_arrivals)):
+            if (process_arrivals[current_time] != None):
+                process = process_arrivals[current_time]
+                if (process.id in last_bursts_and_predicted):
+                    last, last_predicted = last_bursts_and_predicted[process.id]
+                    predicted = alpha*last + (1-alpha)*last_predicted
+                    heappush(heap, (predicted, process))
+                else:
+                    heappush(heap, (5, process))
+        if (current_process == None):
+            if (len(heap) <= 0):
+                if (current_time >= len(process_arrivals)):
+                    done = True
+                    break
+                else:
+                    current_time += 1
+                    continue
+            else:
+                process_prediction, current_process = heappop(heap)
+                last_bursts_and_predicted[current_process.id] = (current_process.burst_time, process_prediction)
+                remaining_burst = current_process.burst_time
+                if (len(schedule) == 0 or current_process.id != schedule[-1][1]):
+                    schedule.append((current_time, current_process.id))
+        current_time += 1
+        remaining_burst -= 1
+        if (remaining_burst <= 0):
+            remaining_burst = -1
+            waiting_time += (current_time - current_process.arrive_time - current_process.burst_time)
+            current_process = None
+    average_waiting_time = waiting_time/float(len(process_list))
+    return schedule, average_waiting_time
 
 def read_input():
     result = []
