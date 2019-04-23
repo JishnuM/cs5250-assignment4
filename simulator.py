@@ -53,6 +53,7 @@ def RR_scheduling(process_list, time_quantum ):
         process_arrivals[process.arrive_time] = process
     current_time = process_list[0].arrive_time
     done = False
+    last_recorded_process = None
     current_process = None
     remaining_quantum = -1
     remaining_burst = -1
@@ -73,8 +74,9 @@ def RR_scheduling(process_list, time_quantum ):
                 current_process = q.pop(0)
                 remaining_quantum = time_quantum
                 remaining_burst = remaining_bursts[current_process]
-                if (len(schedule) == 0 or current_process.id != schedule[-1][1]):
+                if (current_process != last_recorded_process):
                     schedule.append((current_time, current_process.id))
+                    last_recorded_process = current_process
         current_time += 1
         remaining_burst -= 1
         remaining_quantum -= 1
@@ -101,6 +103,7 @@ def SRTF_scheduling(process_list):
     current_time = process_list[0].arrive_time
     done = False
     current_process = None
+    last_recorded_process = None
     remaining_burst = -1
     heap = []
     waiting_time = 0
@@ -113,6 +116,7 @@ def SRTF_scheduling(process_list):
                     current_process = process
                     remaining_burst = process.burst_time
                     schedule.append((current_time, process.id))
+                    last_recorded_process = current_process
                 else:
                     heappush(heap, (process.burst_time, process))
         if (current_process == None):
@@ -125,8 +129,9 @@ def SRTF_scheduling(process_list):
                     continue
             else:
                 remaining_burst, current_process = heappop(heap)
-                if (len(schedule) == 0 or current_process.id != schedule[-1][1]):
+                if (current_process != last_recorded_process):
                     schedule.append((current_time, current_process.id))
+                    last_recorded_process = current_process
         current_time += 1
         remaining_burst -= 1
         if (remaining_burst <= 0):
@@ -145,6 +150,7 @@ def SJF_scheduling(process_list, alpha):
     current_time = process_list[0].arrive_time
     done = False
     current_process = None
+    last_recorded_process = None
     remaining_burst = -1
     last_bursts_and_predicted = {}
     heap = []
@@ -171,8 +177,9 @@ def SJF_scheduling(process_list, alpha):
                 process_prediction, current_process = heappop(heap)
                 last_bursts_and_predicted[current_process.id] = (current_process.burst_time, process_prediction)
                 remaining_burst = current_process.burst_time
-                if (len(schedule) == 0 or current_process.id != schedule[-1][1]):
+                if (current_process != last_recorded_process):
                     schedule.append((current_time, current_process.id))
+                    last_recorded_process = current_process
         current_time += 1
         remaining_burst -= 1
         if (remaining_burst <= 0):
